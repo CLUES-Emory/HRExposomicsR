@@ -80,6 +80,10 @@ xcms_RT_to_RI_calc<-function(	ms_data= raw_data,    #MSExperiment object from XC
   ms_data@spectra$rtime<- RI_rt_FINAL
   print("Retention time indices calculation complete")
 
+  if(length(which(rtime(ms_data) == 0)) != 0){
+    print("Error: Retention index of zero detected. Make sure at least one alkane retenton time exceeds max rt.")
+  }
+
   return(ms_data)
 
 } #End of function 1
