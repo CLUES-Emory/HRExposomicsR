@@ -1,7 +1,8 @@
 #1. Function to create peak groups matrix for standard based alignment
 retcor_group_matrix<- function( istd_df= istds,
-                                xcms_grp1= step_1b_res
-                  ) }
+                                xcms_grp1= step_1b_res,
+                                align_index= p_final
+                  ) {
 
     #Internal standard database
     istds<- istd_df
@@ -37,10 +38,10 @@ retcor_group_matrix<- function( istd_df= istds,
     #Remove samples with greater than 50% missing
     if(length(na_rm) != 0){
       rt_mat<- rt_mat[, -(na_rm + 17)]
-      p_final<- p_final[-na_rm]
+      align_index<- align_index[-na_rm]
     }
 
-    return(rt_mat)
+    return(rt_mat, align_index)
 
 } #End of function 1
 
