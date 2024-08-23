@@ -155,15 +155,15 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
       raw_data<- readMsExperiment(spectraFiles = seq_filenames)
 
 
-      #Perform retenton time indice calculation
+      #Perform retenton time indix calculation
       if(args[7] == TRUE){
         print("Performing retention time indices correction")
 
-        raw_data<-xcms_RT_to_RI_calc( ms_data = raw_data,
-                                        alkanes = args[5],
-                                        average_rt = args[10],
-                                        filter_rt = args[9],
-                                        mapfile = mapfile)
+        raw_data<-xcms_RT_to_RI_calc(ms_data = raw_data,
+                                      alkanes = args[5],
+                                      average_rt = args[10],
+                                      filter_rt = args[9],
+                                      mapfile = mapfile)
 
         merge_rt<-25
 
@@ -173,12 +173,6 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
 
       }
 
-
-      #Check for zeroes in RT. Stopping running if present
-      if(length(which(rtime(raw_data) == 0)) != 0){
-        print("Error: Retention index of zero detected. Stopping peak extraction. Make sure at least one alkane retenton time exceeds max rt.")
-
-      } else  {
 
         #XCMS data processing steps
         #Step 1 XCMS peak detection parameters
@@ -194,13 +188,12 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
         xcms_params$cwp_fitgauss= FALSE
         xcms_params$cwp_extendLengthMSW=TRUE
 
-        #Step 1b Merge neighboring peaks parameters
-        xcms_params$mrg_expandRt = merge_rt
+        #Step 1a Merge neighboring peaks parameters
         xcms_params$mrg_expandMz = 0
         xcms_params$mrg_ppm = 3
         xcms_params$mrg_minProp = 0.9
 
-        #Step 1c XCMS grouping 1 parameters
+        #Step 1b XCMS grouping 1 parameters
         xcms_params$grp1_minFraction = 0.05
         xcms_params$grp1_bw = 2
         xcms_params$grp1_ppm=10
@@ -245,4 +238,4 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
 
 
 
-    } } #Bracket at end of script
+    }  #Bracket at end of script
