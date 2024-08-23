@@ -206,8 +206,19 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
         xcms_params$grp1_ppm=10
         xcms_params$grp1_binSize=0.001
 
+        #Step 2 XCMS retention time correction
+        xcms_params$rtcor_minFraction = 0.75
+        xcms_params$rtcor_extraPeaks = 1
+        xcms_params$rtcor_smooth = "linear"
+        xcms_params$rtcor_span = 0.2
+        xcms_params$rtcor_subsetAdjust = "average"
+        xcms_params$rtcor_family = "gaussian"
 
-
+        #Step 3 XCMS grouping 2 parameters
+        xcms_params$grp2_minFraction = 0.05
+        xcms_params$grp2_bw =2
+        xcms_params$grp2_ppm=10
+        xcms_params$grp2_binSize=0.001
 
 
 
