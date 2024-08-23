@@ -174,8 +174,37 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
       }
 
 
+      #Check for zeroes in RT. Stopping running if present
+      if(length(which(rtime(raw_data) == 0)) != 0){
+        print("Error: Retention index of zero detected. Stopping peak extraction. Make sure at least one alkane retenton time exceeds max rt.")
 
+      } else  {
 
+        #XCMS data processing steps
+        #Step 1 XCMS peak detection parameters
+        xcms_params<-c()
+        xcms_params$cwp_ppm= 5
+        xcms_params$cwp_peakwidth= c(5,25)
+        xcms_params$cwp_snthr= 50
+        xcms_params$cwp_mzdiff= -0.001
+        xcms_params$cwp_noise= 20000
+        xcms_params$cwp_prefilter= c(5,20000)
+        xcms_params$cwp_mzCenterFun= "wMean"
+        xcms_params$cwp_integrate= 1
+        xcms_params$cwp_fitgauss= FALSE
+        xcms_params$cwp_extendLengthMSW=TRUE
+
+        #Step 1b Merge neighboring peaks parameters
+        xcms_params$mrg_expandRt = merge_rt
+        xcms_params$mrg_expandMz = 0
+        xcms_params$mrg_ppm = 3
+        xcms_params$mrg_minProp = 0.9
+
+        #Step 1c XCMS grouping 1 parameters
+        xcms_params$grp1_minFraction = 0.05
+        xcms_params$grp1_bw = 2
+        xcms_params$grp1_ppm=10
+        xcms_params$grp1_binSize=0.001
 
 
 
