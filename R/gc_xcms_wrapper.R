@@ -1,5 +1,6 @@
 #xcms wrapper function to generate
 gc_xcms_wrapper<- function( xcms_params= xcms_params,
+                            ms_data= raw_data,
                             merge_peaks_rt= 25,
                             mapfile= mapfile,
                             subset_alignment= TRUE,
@@ -8,14 +9,14 @@ gc_xcms_wrapper<- function( xcms_params= xcms_params,
                             istds= istds,
                             xcms_outloc= xcms_outloc,
                             study_id= study_id
-) }
+) {
 
     print("Stage 1: Peak detection and alignment using xcms")
 
     print("Performing Step 1: Peak Detection")
     #Step 1, peak detection
     #Define CentWave parameterds
-    xcms::cwp <- CentWaveParam(
+    cwp <- xcms::CentWaveParam(
       ppm= xcms_params$cwp_ppm,
       peakwidth= xcms_params$cwp_peakwidth,
       snthr= xcms_params$cwp_snthr,
@@ -29,7 +30,7 @@ gc_xcms_wrapper<- function( xcms_params= xcms_params,
 
 
     #Detect peaks using cwp
-    step_1_res <- xcms::findChromPeaks(raw_data, param = cwp)
+    step_1_res <- xcms::findChromPeaks(ms_data, param = cwp)
 
 
     #Step 1a, merge split peaks
