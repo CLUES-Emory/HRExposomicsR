@@ -75,10 +75,10 @@ xcms_RT_to_RI_calc<-function(	ms_data= raw_data,    #MSExperiment object from XC
     batch_n<- batch_n + 1					#Advance to next batch RIs
     RI_rt_FINAL<-c(RI_rt_FINAL, RI_rt_ii)	#Final adjusted RTs
   }
-  print("Retention time indices calculation complete")
 
   #Update raw retention time with alkane indices
   ms_data@spectra$rtime<- RI_rt_FINAL
+  print("Retention time indices calculation complete")
 
   return(ms_data)
 
@@ -136,4 +136,17 @@ cmp_rt_to_ri<- function(input_file= "/Users/diwalke/Dropbox/RESEARCH/Scripts/202
   writexl::write_xlsx(cmpds, out.names)
 
 } #End of function 2
+
+
+
+########
+#Variables include:
+#input_file: File containing compounds of interest in each row and detected retention time (in minutes).
+#time_col1: Time column in input file
+#alkane_rt: File containing alkane retention times (in minutes)
+#time_col2:  column to use in alkanes_rt
+#outloc: Where to save files
+
+#3. Function to convert RI back to RT in minutes
+
 
