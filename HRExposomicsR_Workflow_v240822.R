@@ -245,4 +245,4 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
 
 
 
-    } #Bracket at end of script
+    } } #Bracket at end of script
