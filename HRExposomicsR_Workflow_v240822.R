@@ -159,7 +159,7 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
       if(args[7] == TRUE){
         print("Performing retention time indices correction")
 
-        raw_data<-xcms_RT_to_RI_calc(ms_data = raw_data,
+        raw_data_RI<-xcms_RT_to_RI_calc(ms_data = raw_data,
                                       alkanes = args[5],
                                       average_rt = args[10],
                                       filter_rt = args[9],
@@ -214,6 +214,17 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
         xcms_params$grp2_binSize=0.001
 
 
+        #Run xcms wrapper functon to generate feature table
+        feature_table<- gc_xcms_wrapper(xcms_params= xcms_params,
+                                        ms_data= raw_data_RI,
+                                        merge_peaks_rt= merge_rt,
+                                        mapfile= mapfile,
+                                        subset_alignment= TRUE,
+                                        sample_class_subsets= subset_samples,
+                                        std_alignment= TRUE,
+                                        istds= istds,
+                                        xcms_outloc= xcms_outloc,
+                                        study_id= study_id)
 
 
 
