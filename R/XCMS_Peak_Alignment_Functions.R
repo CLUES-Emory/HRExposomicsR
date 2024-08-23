@@ -41,7 +41,7 @@ retcor_group_matrix<- function( istd_df= istds,
       align_index<- align_index[-na_rm]
     }
 
-    return(rt_mat, align_index)
+    return(list(rt_df= rt_mat, align_index= align_index))
 
 } #End of function 1
 

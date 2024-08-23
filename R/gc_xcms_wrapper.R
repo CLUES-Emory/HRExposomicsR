@@ -85,7 +85,7 @@ gc_xcms_wrapper<- function( xcms_params= xcms_params,
       retcor_params<- PeakGroupsParam(
         minFraction = xcms_params$rtcor_minFraction,
         extraPeaks = xcms_params$rtcor_extraPeaks,
-        peakGroupsMatrix= as.matrix(istd_grp_matrix$rt_mat[,-c(1:17)]),
+        peakGroupsMatrix= as.matrix(istd_grp_matrix$rt_df[,-c(1:17)]),
         smooth = xcms_params$rtcor_smooth,
         span = xcms_params$rtcor_span,
         subset = istd_grp_matrix$align_index,
