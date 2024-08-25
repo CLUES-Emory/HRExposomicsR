@@ -1,7 +1,9 @@
 #1. Function to create peak groups matrix for standard based alignment
 retcor_group_matrix<- function( istd_df= istds,
                                 xcms_grp1= step_1b_res,
-                                align_index= p_final
+                                sample_align= p_final,
+                                mz_error = 5,
+                                time_error = 5
                   ) {
 
     #Internal standard database
@@ -19,7 +21,7 @@ retcor_group_matrix<- function( istd_df= istds,
 
     #Match internal standards to detected peaks using xMSanalyzer
     overlap_res<- xMSanalyzer::find.Overlapping.mzs(istds[,c("mz", "Alkane_RI")], rt_mat[,c("mzmed", "rtmed")],
-                                       mz.thresh = 5, time.thresh = 5, alignment.tool = NA)
+                                       mz.thresh = mz_error, time.thresh = time_error, alignment.tool = NA)
 
     overlap_res<-cbind(istds[overlap_res$index.A,1], overlap_res)
 
@@ -30,6 +32,7 @@ retcor_group_matrix<- function( istd_df= istds,
 
     #Combine to create final table
     rt_mat<-cbind(overlap_res, rt_mat[overlap_res$index.B, ])
+    rt_mat<-rt_mat[,c(1:17, 17 + c(sample_align))]
 
     #Count non-detects in samples and remove any with greater than
     na_rm<-colSums(is.na(rt_mat[, -c(1:17)])) / nrow(rt_mat)
@@ -37,11 +40,11 @@ retcor_group_matrix<- function( istd_df= istds,
 
     #Remove samples with greater than 50% missing
     if(length(na_rm) != 0){
-      rt_mat<- rt_mat[, -(na_rm + 17)]
-      align_index<- align_index[-na_rm]
+      rt_mat<- rt_mat[, -c(na_rm + 17)]
+      sample_align<- sample_align[-na_rm]
     }
 
-    return(list(rt_df= rt_mat, align_index= align_index))
+    return(list(rt_df= rt_mat[,-c(1:17)], align_index= sample_align))
 
 } #End of function 1
 

@@ -179,7 +179,7 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
         xcms_params<-c()
         xcms_params$cwp_ppm= 5
         xcms_params$cwp_peakwidth= c(5,25)
-        xcms_params$cwp_snthr= 50
+        xcms_params$cwp_snthr= 5
         xcms_params$cwp_mzdiff= -0.001
         xcms_params$cwp_noise= 20000
         xcms_params$cwp_prefilter= c(5,20000)
@@ -206,6 +206,8 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
         xcms_params$rtcor_span = 0.2
         xcms_params$rtcor_subsetAdjust = "average"
         xcms_params$rtcor_family = "gaussian"
+        xcms_params$rtcor_mz_align = 5
+        xcms_params$rtcor_time_align = 5
 
         #Step 3 XCMS grouping 2 parameters
         xcms_params$grp2_minFraction = 0.05
@@ -224,7 +226,10 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
                                         std_alignment= TRUE,
                                         istds= istds,
                                         xcms_outloc= xcms_outloc,
-                                        study_id= study_id)
+                                        study_id= study_id,
+                                        mz_error = xcms_params$rtcor_mz_align,
+                                        time_error = xcms_params$rtcor_time_align
+                                        )
 
 
 

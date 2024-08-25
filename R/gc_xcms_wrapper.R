@@ -1,6 +1,6 @@
 #xcms wrapper function to generate
 gc_xcms_wrapper<- function( xcms_params= xcms_params,
-                            ms_data= raw_data,
+                            ms_data= raw_data_RI,
                             merge_peaks_rt= 25,
                             mapfile= mapfile,
                             subset_alignment= TRUE,
@@ -8,7 +8,10 @@ gc_xcms_wrapper<- function( xcms_params= xcms_params,
                             std_alignment= TRUE,
                             istds= istds,
                             xcms_outloc= xcms_outloc,
-                            study_id= study_id
+                            study_id= study_id,
+                            mz_error = 5,
+                            time_error = 5
+
 ) {
 
     print("Stage 1: Peak detection and alignment using xcms")
@@ -57,8 +60,6 @@ gc_xcms_wrapper<- function( xcms_params= xcms_params,
 
     step_1b_res <- xcms::groupChromPeaks(step_1a_res, param = pdp.1)
 
-    #saveRDS(step_1b_res, paste(xcms_outloc, study_id, "-Step01_XCMSnExp.rds", sep=""))
-
 
     #######
     #Step 2; Retention time correction
@@ -79,13 +80,15 @@ gc_xcms_wrapper<- function( xcms_params= xcms_params,
     if(std_alignment == TRUE) {
       istd_grp_matrix<- retcor_group_matrix(istd_df= istds,
         xcms_grp1= step_1b_res,
-        align_index= p_final)
+        sample_align= p_final,
+        mz_error = mz_error,
+        time_error = time_error)
 
       #Retention time correction parameters using subset and std alignment
       retcor_params<- PeakGroupsParam(
         minFraction = xcms_params$rtcor_minFraction,
         extraPeaks = xcms_params$rtcor_extraPeaks,
-        peakGroupsMatrix= as.matrix(istd_grp_matrix$rt_df[,-c(1:17)]),
+        peakGroupsMatrix= as.matrix(istd_grp_matrix$rt_df),
         smooth = xcms_params$rtcor_smooth,
         span = xcms_params$rtcor_span,
         subset = istd_grp_matrix$align_index,
@@ -110,12 +113,11 @@ gc_xcms_wrapper<- function( xcms_params= xcms_params,
 
 
     #Create adjustment plot
-    res_c<-colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(nrow(mapfile))
-    names(res_c) <- mapfile[, 1]
+    res_c<-colorRampPalette(brewer.pal(8, "Set2"))(nrow(mapfile[, ]))
+    names(res_c) <- mapfile[, ]
 
     pdf(paste(xcms_outloc, study_id, "-Retention_time_deviation.pdf", sep=""))
-    xcms::plotAdjustedRtime(step_2_res, col = res_c)
-
+    xcms::plotAdjustedRtime(step_2_res, col = names(1:nrow(mapfile)))
     dev.off()
 
 
@@ -126,10 +128,10 @@ gc_xcms_wrapper<- function( xcms_params= xcms_params,
 
 
     #Grouping 2 parametere
-    pdp <- xcms::PeakDensityParam(sampleGroups =mapfile[,3],
+    pdp <- xcms::PeakDensityParam(sampleGroups =mapfile[, 3],
                             minFraction = xcms_params$grp2_minFraction,
                             bw = xcms_params$grp2_bw,
-                            ppm =xcms_params$grp2_ppm,
+                            ppm = xcms_params$grp2_ppm,
                             binSize=xcms_params$grp2_binSize)
 
 
@@ -143,6 +145,7 @@ gc_xcms_wrapper<- function( xcms_params= xcms_params,
 
 
     step_4_res <- fillChromPeaks(step_3_res, param = ChromPeakAreaParam())
+
 
 
     #Calculate percent decrease in zeroes after missing value filling
@@ -202,4 +205,5 @@ gc_xcms_wrapper<- function( xcms_params= xcms_params,
     return(feature_table)
 
 }
+
 
