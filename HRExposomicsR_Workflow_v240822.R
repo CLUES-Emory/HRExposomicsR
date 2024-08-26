@@ -123,6 +123,7 @@ mzML_files_BASE<- mzML_files_FULL %>%
 
 print(paste("Number of files: ", length(mzML_files_BASE), sep=""))
 
+
 #Error checking to determine if number files matches sequence file
 if(nrow(mapfile) != length(mzML_files_BASE)){
   print("STOP! NUMBER OF FILES DOES NOT EQUAL SEQUENCE FILE")
@@ -230,6 +231,70 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
                                         mz_error = xcms_params$rtcor_mz_align,
                                         time_error = xcms_params$rtcor_time_align
                                         )
+
+        ### Part2: If multiple batches present, perform batch evaluation and correction
+        print("Stage 2: Batch correction")
+        batch_num_all<-length(unique(mapfile$Batch))
+
+        bc_outloc<-paste(args[1],"/Stage2-GCHRMS_", study_id, "_BatchCorrection/",sep="")
+        dir.create(bc_outloc)
+
+
+        #If only 1 batch, skip correction
+        if(batch_num_all==1){
+          print("Only 1 batch, skipping batch correction")
+          step2_ft<-feature_table[feature_table$Percent_Detected >= as.numeric(args[8]), ]
+
+          nc_outname<-paste(bc_outloc, "1-", study_id, "_Untargeted_RAW_Feature_Table_", as.numeric(args[8]), "%MV_Filtered.txt", sep="")
+          write.table(feature_table, nc_outname, sep="\t", row.names=FALSE)
+
+
+        } else  {
+
+          feature_table<-feature_table[feature_table$Percent_Detected >= as.numeric(args[8]), ]
+
+          print("Summarizing batch effects before correction")
+
+          #First, evaluate batch effects in raw data
+          #Function to plot pdfs of batch correction evaluation, including PC1 and 2 and ISTD intensities
+          batch_eval_plots(feature_table= feature_table, #Feature table from data extraction
+                           mapfile= mapfile,             #Mapfile
+                           istd_df= istds,               #Internal standard mzs and rt
+                           pdf_loc= bc_outloc,           #Where to save pdfs
+                           corr_mode= "Pre",             #Batch correction mode
+                           istd_plots= istd_plots,
+                           study_id=study_id,
+                           cols_meta= 12
+          )
+
+
+          #Output non-batch corrected, filtered feature table
+          nc_outname<-paste(bc_outloc, "1-", study_id, "_Untargeted_RAW_Feature_Table_", as.numeric(args[8]),"%MV_Filtered.txt", sep="")
+          write.table(feature_table, nc_outname, sep="\t", row.names=FALSE)
+
+
+
+          ###################
+          #####Batch correction####
+          #Perform up to three batch corrections for full feature table after filtering
+          batch_correction_results<-gc_batch_correct(feature_table= feature_table,     #feature table with mzs in rows and samples in columns
+                                                     cols_meta= 12,                    #number of columns meta data
+                                                     corr_modes=c("MetaComBat", "WaveICA", "LIMMA"),  #Which batch correction modes
+                                                     outloc=bc_outloc,                 #output location
+                                                     istds=istds,
+                                                     mapfile=mapfile,
+                                                     study_id= study_id,
+                                                     istd_plots= istd_plots)
+
+
+
+          print("Batch correction finished")
+        }	#End of batch processing code chunk
+
+
+
+
+
 
 
 
