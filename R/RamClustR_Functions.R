@@ -101,6 +101,115 @@ ramclustR_wrapper<-function(ramclustr_params= ramclustr_params,
 
         write.table(sprectra_ft, paste(ramclustr_out, "3-", study_id, "-GCHRMS_PreBatchCorr_SpectraClustered_Feature_Table.txt", sep=""), sep="\t", row.names=FALSE)
 
-        return(sprectra_ft)
+        res_out<-list()
+        res_out$sprectra_ft<- sprectra_ft
+        res_out$cluster_ft<- cluster_ft
 
-}
+        return(res_out)
+
+} #end function 2
+
+
+
+#3. Function to create msp and mgf files
+
+ramclustr_to_msp_mgf<-function(ramclustr_out= ramclustr_outloc,
+                               ramclustr_ft= ramclustr_res$sprectra_ft,
+                               ramclustr_clusters= ramclustr_res$cluster_ft,
+                               study_id= study_id){
+
+
+
+#Create msp and mgf output files
+        msp_output<- paste(ramclustr_out, "4a-", study_id, "-GCHRMS_MSP-Spectra.msp", sep="")
+        mgf_output<- paste(ramclustr_out, "4b-", study_id, "-GCHRMS_MGF-Spectra.mgf", sep="")
+
+
+        for(ii in 1:nrow(ramclustr_ft)){
+          clust_ii<- ramclustr_ft[ii,1] #Select cluster #
+
+          ms_spectra<- ramclustr_clusters[ramclustr_clusters$Cluster_name==clust_ii,]  %>%              #Select mz for cluster
+                        .[,c(2, 14 + which(colSums(.[, -c(1:14)]) == max(colSums(.[,-c(1:14)]))))] %>%     #Select sample with max column sum
+                        rename_at(2, ~"intensity") %>%              #Rename intensity column
+                        arrange(desc(intensity))  %>%               #Arrange in order
+                        mutate(intensity = round(intensity / max(intensity) * 100, 2)) %>%  #Normalize by max
+                        filter(intensity >= 1)         #Remove features with intensity %< 1
+
+
+
+          if(nrow(ms_spectra) > 1){
+            ms_entropy<- msentropy::calculate_spectral_entropy(as.matrix(ms_spectra))/log(nrow(ms_spectra))
+          } else  {
+            ms_entropy<-NA
+          }
+
+
+          #Code for writing to MSP file
+
+            cat(
+            paste("NAME", clust_ii, sep=": "),
+              "msLevel: 1",
+            paste("RETENTIONTIME", round(as.numeric(ramclustr_ft= ramclustr_res$sprectra_ft[ii,2]),2), sep=": "),
+            paste("RETENTIONINDEX", round(as.numeric(ramclustr_ft= ramclustr_res$sprectra_ft[ii,2]),2), sep=": "),
+              "INSTRUMENTTYPE: GC-HRMS",
+              "INSTRUMENT: Thermo Exploris240",
+              "IONMODE: Positive",
+              "IONIZATION: EI",
+              "Spectrum_type: in-source",
+            paste("Notes: Date processed", Sys.Date(), sep= " "),
+            paste("COMMENT: ",
+                  "Study ID: ", study_id, "; ",
+                  "Normalized Spectral Entropy: ", round(ms_entropy,3), sep=""),
+            paste("Num Peaks: ", nrow(ms_spectra), sep=""),
+
+            sep = "\n", file = msp_output, append = TRUE)
+
+          #Add spectra
+          data.table::fwrite(x =ms_spectra,
+                             file = msp_output,
+                             sep="\t",
+                             col.names=F,
+                             append=T)
+
+          #Add empty line after spectra
+          cat("",
+              sep = "\n", file = msp_output, append = TRUE)
+
+
+
+
+          ###Create mgf file
+          # Add all meta data
+
+          cat("BEGIN IONS",
+              paste("NAME", clust_ii, sep= "="),
+                "CHARGE=1+",
+              paste("RTINSECONDS", round(as.numeric(ramclustr_ft= ramclustr_res$sprectra_ft[ii, 2]), 2), sep= "="),
+              paste("TITLE=",
+                    "Study ID: ", study_id, "; ",
+                    "Normalized Spectral Entropy: ", round(ms_entropy,3), sep=""),
+              sep = "\n", file = mgf_output, append = TRUE)
+
+          #Add spectra
+          data.table::fwrite(x = ms_spectra,
+                             file = mgf_output,
+                             sep = "\t",
+                             col.names = F,
+                             append = T)
+
+          #Add empty line after spectra
+          cat("END IONS",
+              "",
+              sep = "\n", file = mgf_output, append = TRUE)
+
+
+
+
+
+        }
+
+        }
+
+
+
+

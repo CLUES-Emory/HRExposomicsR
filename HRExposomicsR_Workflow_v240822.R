@@ -73,7 +73,7 @@ mapfile<- read.table(args[4], sep= "\t", header= TRUE)
 
 
 #Variable for subset retention correction. Should be in fourth column in mapfile and only include biological samples
-subset_samples<- args[14:length(args)]
+subset_samples<- unlist(strsplit(args[14],","))	#args[14:length(args)]
 print(subset_samples)
 
 
@@ -293,30 +293,84 @@ if(nrow(mapfile) != length(mzML_files_BASE)){
 
 
 
+        ###########
+        ######RamClustR
+        print("Stage 3: Spectra deconvolution using RamClustR")
+
+        #Create output directory to save RamClustR results
+        ramclustr_outloc<-paste(args[1],"/Stage3-GCHRMS_", study_id, "_Spectra_Deconvolution/",sep="")
+        dir.create(ramclustr_outloc)
+
+
+        #Create table for RamClustR using function xcms_to_ramclustr_table
+        ramclustr_file_path<- xcms_to_ramclustr_table(feature_table= feature_table,
+                                                out_dir= ramclustr_outloc,
+                                                cols_meta= 12,
+                                                study_id= study_id)
+
+
+        #Paramaters for RamClustR
+        ramclustr_params<-c()
+        ramclustr_params$featdelim= "_"
+        ramclustr_params$timepos= 2
+        ramclustr_params$st= 5
+        ramclustr_params$sr= 5
+        ramclustr_params$maxt=10
+        ramclustr_params$blocksize= 2000
+        ramclustr_params$deepSplit = FALSE
+        ramclustr_params$mult= c1
+        ramclustr_params$ExpDes= defineExperiment(force.skip = TRUE)
+        ramclustr_params$sampNameCol= 1
+        ramclustr_params$mspout= FALSE
+        ramclustr_params$minModuleSize=1
+        ramclustr_params$mzdec= 5
+        ramclustr_params$normalize= "none"
+        ramclustr_params$linkage= "average"
+        ramclustr_params$rt.only.low.n= TRUE
+        ramclustr_params$replace.zeros= FALSE
+
+
+        #Wrapper function for running ramclustR and generating clustered feature tables
+        ramclustr_res<- ramclustR_wrapper(ramclustr_params= ramclustr_params,
+                                         ramclustr_file= ramclustr_file_path,
+                                         ramclustr_out= ramclustr_outloc,
+                                         feature_table= feature_table,
+                                         cols_meta= 12,
+                                         study_id= study_id)
+
+
+
+        #Evaluate pre-batch correction spectra averaged table
+        batch_eval_plots(feature_table= ramclustr_res$sprectra_ft,         #Feature table from data extraction
+                         mapfile= mapfile,             #Mapfile
+                         istd_df= istds,               #Internal standard mzs and rt
+                         pdf_loc= ramclustr_outloc,          #Where to save pdfs
+                         corr_mode= "Pre",             #Batch correction mode
+                         istd_plots= FALSE,
+                         study_id= study_id,
+                         cols_meta= 4
+        )
+
+        #####Batch correction####
+        #Perform up to three batch corrections for full feature table after filtering
+        batch_correction_results_RCR<- gc_batch_correct(feature_table= ramclustr_res$sprectra_ft,     #feature table with mzs in rows and samples in columns
+                                                       cols_meta= 4,                    #number of columns meta data
+                                                       corr_modes= c("MetaComBat", "WaveICA", "LIMMA"),  #Which batch correction modes
+                                                       outloc= rcr_outloc,                 #output location
+                                                       istds= istds,
+                                                       mapfile= mapfile,
+                                                       study_id= study_id,
+                                                       istd_plots= FALSE)
 
 
 
 
+        #Create msp and mgf output files
+        ramclustr_to_msp_mgf(ramclustr_out= ramclustr_outloc,
+                              ramclustr_ft= ramclustr_res$sprectra_ft,
+                              ramclustr_clusters= ramclustr_res$cluster_ft,
+                              study_id= study_id)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    }  #Bracket at end of script
+    } }#Bracket at end of script
